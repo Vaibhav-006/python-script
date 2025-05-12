@@ -1,0 +1,3 @@
+fastapi
+uvicorn
+# plus any other dependencies you need for your scripts
