@@ -37,11 +37,11 @@ async def process_pdf_endpoint(file: UploadFile = File(...), language: str = For
     with open(file_location, "wb") as f:
         f.write(await file.read())
     # Call your PDF processing logic (should return a dict)
-    result = process_pdf.process(file_location, language)
+    result = process_pdf.extract_text_from_pdf(file_location, language)
     return result
 
 @app.post("/get-transcript/")
 async def get_transcript_endpoint(req: TranscriptRequest):
     # Call your transcript extraction logic (should return a dict)
-    result = get_transcript.process(req.url, req.language)
+    result = get_transcript.get_transcript(req.url, req.language)
     return result
