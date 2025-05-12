@@ -2,7 +2,7 @@ import sys
 import json
 import PyPDF2
 
-def extract_text_from_pdf(pdf_path):
+def extract_text_from_pdf(pdf_path, language="en"):
     try:
         with open(pdf_path, 'rb') as file:
             # Create PDF reader object
