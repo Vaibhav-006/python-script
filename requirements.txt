@@ -1,4 +1,5 @@
 fastapi
 uvicorn
 PyPDF2
+youtube_transcript_api
 # plus any other dependencies you need for your scripts
