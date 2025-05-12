@@ -6,6 +6,16 @@ import get_transcript
 
 app = FastAPI()
 
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"message": "Your app is live!"}
+
+# Other routes, like /api/summarize, should be defined here as well.
+
 # Allow CORS for all origins (for development; restrict in production)
 app.add_middleware(
     CORSMiddleware,
