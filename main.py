@@ -3,8 +3,23 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import process_pdf
 import get_transcript
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+# 👇 CORS middleware lagaya
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Tu yahan apne frontend ka URL bhi de sakta hai for security
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/api/transcript")
+async def get_transcript(url: str):
+    # Your logic here
+    ...
 
 from fastapi import FastAPI
 
