@@ -7,7 +7,7 @@ import logging
 import sys
 import os
 from typing import Optional
-
+from get_transcript import get_transcript, TranscriptError
 import google.generativeai as genai
 
 import process_pdf  # Your custom module

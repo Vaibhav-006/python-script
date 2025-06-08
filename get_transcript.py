@@ -2,6 +2,20 @@ import requests
 import random
 import json
 import re
+# get_transcript.py
+from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
+
+class TranscriptError(Exception):
+    pass
+
+def get_transcript(video_url: str, language='en') -> dict:
+    try:
+        video_id = video_url.split("v=")[-1].split("&")[0]
+        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=[language])
+        return {"transcript": transcript}
+    except (TranscriptsDisabled, NoTranscriptFound, VideoUnavailable) as e:
+        raise TranscriptError(str(e))
 
 # Proxy list (example)
 proxies = [
