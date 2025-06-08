@@ -1,24 +1,9 @@
-import requests
 import random
-import json
 import re
-# get_transcript.py
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
+from youtube_transcript_api._errors import VideoUnavailable, TranscriptsDisabled, NoTranscriptFound, TooManyRequests, ProxyError
 
-class TranscriptError(Exception):
-    pass
-
-def get_transcript(video_url: str, language='en') -> dict:
-    try:
-        video_id = video_url.split("v=")[-1].split("&")[0]
-        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=[language])
-        return {"transcript": transcript}
-    except (TranscriptsDisabled, NoTranscriptFound, VideoUnavailable) as e:
-        raise TranscriptError(str(e))
-
-# Proxy list (example)
-proxies = [
+proxies_list = [
     "http://87.248.129.32:80",
 "http://78.28.152.113:80",
 "http://85.132.37.9:1313",
@@ -162,56 +147,28 @@ proxies = [
     # Add more proxies here
 ]
 
-def get_video_id(url):
-    match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", url)
-    if match:
-        return match.group(1)
-    else:
-        return None
+def extract_video_id(url):
+    # Extracts only the video ID from full YouTube URL
+    regex = r"(?:v=|\/)([0-9A-Za-z_-]{11}).*"
+    match = re.search(regex, url)
+    return match.group(1) if match else url  # fallback to raw input
 
-def fetch_transcript_with_proxy(video_url):
-    video_id = get_video_id(video_url)
-    if not video_id:
-        raise ValueError("Invalid YouTube URL")
+def get_transcript(url, language="en"):
+    video_id = extract_video_id(url)
+    print(f"[INFO] Extracted Video ID: {video_id}")
 
-    # Random proxy pick
-    proxy = random.choice(proxies)
-    proxies_dict = {
-        'http': proxy,
-        'https': proxy,
-    }
+    last_error = None
+    for proxy in proxies_list:
+        try:
+            transcript = YouTubeTranscriptApi.get_transcript(
+                video_id,
+                languages=[language],
+                proxies={"http": proxy, "https": proxy}
+            )
+            return transcript
+        except (TooManyRequests, ProxyError, VideoUnavailable, NoTranscriptFound, TranscriptsDisabled) as e:
+            print(f"[WARN] Proxy failed: {proxy} | Error: {str(e)}")
+            last_error = e
+            continue
 
-    # YouTube transcript API endpoint (unofficial)
-    transcript_api_url = f'https://youtube.com/api/timedtext?lang=en&v={video_id}'
-
-    try:
-        response = requests.get(transcript_api_url, proxies=proxies_dict, timeout=10)
-        if response.status_code != 200:
-            raise Exception(f"Failed to fetch transcript, status code: {response.status_code}")
-
-        # Response is XML, so parse accordingly
-        from xml.etree import ElementTree
-        root = ElementTree.fromstring(response.text)
-
-        transcript = []
-        for child in root.findall('text'):
-            start = float(child.attrib['start'])
-            dur = float(child.attrib.get('dur', 0))
-            text = child.text or ''
-            transcript.append({'start': start, 'duration': dur, 'text': text})
-
-        return transcript
-
-    except Exception as e:
-        print("Error fetching transcript:", e)
-        return None
-
-if __name__ == "__main__":
-    url = input("Enter YouTube URL: ")
-    result = fetch_transcript_with_proxy(url)
-    if result:
-        print("Transcript:")
-        for item in result:
-            print(f"{item['start']:.2f} --> {item['text']}")
-    else:
-        print("Transcript fetch failed.")
+    raise Exception(f"All proxies failed. Last error: {last_error}")
