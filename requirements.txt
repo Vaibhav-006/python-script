@@ -3,4 +3,5 @@ uvicorn
 PyPDF2
 youtube_transcript_api
 python-multipart
+requests
 # plus any other dependencies you need for your scripts
