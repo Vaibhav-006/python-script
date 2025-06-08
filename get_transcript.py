@@ -1,4 +1,4 @@
-from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
 import sys
 import json
 
@@ -15,7 +15,7 @@ def get_transcript(url, language='en'):
     try:
         video_id = get_video_id(url)
         if not video_id:
-            return {"error": "Invalid YouTube URL"}
+            return {"success": False, "error": "Invalid YouTube URL"}
         
         # Get available transcripts
         transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
@@ -23,23 +23,39 @@ def get_transcript(url, language='en'):
         # Try to get transcript in requested language
         try:
             transcript = transcript_list.find_transcript([language])
-            return {"transcript": transcript.fetch()}
+            return {
+                "success": True,
+                "transcript": transcript.fetch(),
+                "language": language
+            }
         except:
             # If requested language not available, try to get English transcript
             try:
                 transcript = transcript_list.find_transcript(['en'])
-                return {"transcript": transcript.fetch()}
+                return {
+                    "success": True,
+                    "transcript": transcript.fetch(),
+                    "language": "en"
+                }
             except:
                 # If no English transcript, get the first available transcript
                 transcript = transcript_list.find_transcript()
-                return {"transcript": transcript.fetch()}
+                return {
+                    "success": True,
+                    "transcript": transcript.fetch(),
+                    "language": transcript.language_code
+                }
                 
+    except TranscriptsDisabled:
+        return {"success": False, "error": "Transcripts are disabled for this video"}
+    except NoTranscriptFound:
+        return {"success": False, "error": "No transcript found for this video"}
     except Exception as e:
-        return {"error": str(e)}
+        return {"success": False, "error": str(e)}
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "Please provide a YouTube URL"}))
+        print(json.dumps({"success": False, "error": "Please provide a YouTube URL"}))
         sys.exit(1)
     
     url = sys.argv[1]

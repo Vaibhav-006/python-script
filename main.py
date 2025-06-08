@@ -34,21 +34,18 @@ class TranscriptRequest(BaseModel):
 @app.post("/get-transcript/")
 async def get_transcript_endpoint(req: TranscriptRequest):
     try:
-        return get_transcript.get_transcript(req.url, req.language)
-    except TranscriptsDisabled:
-        return JSONResponse(status_code=403, content={"error": "Transcript is disabled for this video"})
-    except NoTranscriptFound:
-        return JSONResponse(status_code=404, content={"error": "No transcript found for this video"})
+        result = get_transcript.get_transcript(req.url, req.language)
+        if not result.get("success", False):
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "error": result.get("error", "Unknown error")}
+            )
+        return JSONResponse(content=result)
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-# ✅ Optional GET-based transcript route (not needed if POST works fine)
-@app.get("/api/transcript")
-async def get_transcript_get(url: str, language: str = "en"):
-    try:
-        return get_transcript.get_transcript(url, language)
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": f"Server error: {str(e)}"}
+        )
 
 # ✅ PDF Upload + Processing endpoint
 @app.post("/process-pdf/")
